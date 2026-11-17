@@ -32,8 +32,8 @@ continue_best: true  # continue from best, not last state if continue_from is se
 # Other stuff
 seed: 2036
 dummy:  # use this if you want twice the same exp, with a different name
-cache: ./cache
-features_models: ./features_models
+cache: /courses/CS7150.202710/students/meka.ha/cache
+features_models: /courses/CS7150.202710/students/meka.ha/features_models
 early_stop_patience: 10  # number of epochs to wait before early stop
 eval_every: 1
 eval_train_set: false   # also evaluates on the train set for debugging.
