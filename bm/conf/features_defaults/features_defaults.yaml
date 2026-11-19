@@ -9,6 +9,12 @@ dset:
       normalized: true
       use_log_scale: true
       log_scale_eps: 1e-5
+    Envelope:
+      n_fft: 512
+      n_mels: 120
+      normalized: true
+      use_log_scale: true
+      log_scale_eps: 1e-5
     Pitch:
       min_f0: 100
       max_f0: 350

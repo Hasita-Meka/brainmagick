@@ -321,3 +321,34 @@ def _extract_wav_part(
     delta = abs(wav.shape[-1] / sr - offset + onset)
     assert delta <= 0.1, (delta, filepath, onset, offset, onset - offset)
     return wav, sr
+
+
+class Envelope(MelSpectrum):
+    """One channel: log broadband power, i.e. mel power summed over bands before the log.
+
+    Added for the CS 7150 project as the loudness-and-timing target (guide section 6.1).
+    """
+
+    def __init__(self, sample_rate: Frequency, n_mels=40, n_fft=512, in_sampling=16_000,
+                 normalized=True, use_log_scale=True, log_scale_eps=1e-5,
+                 norm_audio: bool = True) -> None:
+        # CaptureInit wraps __init__ so that it accepts keyword arguments only.
+        super().__init__(sample_rate=sample_rate, n_mels=n_mels, n_fft=n_fft,
+                         in_sampling=in_sampling, normalized=normalized,
+                         use_log_scale=use_log_scale, log_scale_eps=log_scale_eps,
+                         norm_audio=norm_audio)
+        self.dimension = 1
+
+    def _compute(self, filepath: Path, start: float, stop: float) -> torch.Tensor:
+        wav, sr = _extract_wav_part(filepath, start, stop)
+        wav = torch.mean(wav, dim=0)  # stereo to mono
+        if self.norm_audio:
+            wav = (wav - wav.mean()) / (1e-8 + wav.std())
+        wav = julius.resample.ResampleFrac(old_sr=int(sr), new_sr=self.in_sampling)(wav)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            melspec = self.trans(wav)
+        power = melspec.sum(dim=0, keepdim=True)  # mel power summed over bands: [1, time]
+        if self.use_log_scale:
+            power = torch.log10(power + self.log_scale_eps)
+        return power
